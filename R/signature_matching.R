@@ -1,25 +1,17 @@
-#' Signature Matching Utility
-#'
-#' @description Functions to match drug response signatures against reference profiles
-#' from the CMap database that were previously extracted using the CMap extract functions.
-#'
-#' @name signature_matching
-NULL
-
-#' Process drug response signatures against reference data
+#' Process drug response signatures against reference data in a dataframe
 #'
 #' @param signature_file Path to signature gene list with log2FC values
-#' @param reference_file Path to reference data extracted from CMap
-#' @param output_prefix Prefix for output files
+#' @param reference_df Dataframe containing reference data (combined across all conditions)
+#' @param output_dir Directory for output files (default: "results")
 #' @param permutations Number of permutations for statistical testing
 #' @param methods Vector of method names to run (default: all)
 #'        Options: "ks", "xcos", "xsum", "gsea0", "gsea1", "gsea2", "zhang"
 #'
-#' @return List containing results from selected scoring methods
+#' @return List containing results for each method
 #' @export
-process_signature <- function(signature_file, reference_file, output_prefix = "results",
-                              permutations = 100, methods = c("ks", "xcos", "xsum", "gsea0",
-                                                              "gsea1", "gsea2", "zhang")) {
+process_signature_with_df <- function(signature_file, reference_df, output_dir = "results",
+                                      permutations = 100, methods = c("ks", "xcos", "xsum", "gsea0",
+                                                                      "gsea1", "gsea2", "zhang")) {
   # Ensure RCSM is installed
   if (!requireNamespace("RCSM", quietly = TRUE)) {
     if (!requireNamespace("devtools", quietly = TRUE)) {
@@ -30,16 +22,14 @@ process_signature <- function(signature_file, reference_file, output_prefix = "r
     message("Installing RCSM package from GitHub...")
     devtools::install_github("Jasonlinchina/RCSM")
   }
-  
+
   # Load RCSM
   requireNamespace("RCSM", quietly = TRUE)
-  
-  # Read the reference data (output from CMap_split_gctx.R)
-  message("Reading reference data from ", reference_file)
-  ref_data <- utils::read.delim(reference_file, sep = "\t", row.names = 1, check.names = FALSE)
 
-  # Convert to matrix format required by RCSM
-  ref <- as.matrix(ref_data)
+  # Create output directory if it doesn't exist
+  if (!dir.exists(output_dir)) {
+    dir.create(output_dir, recursive = TRUE)
+  }
 
   # Read the signature file
   message("Reading signature data from ", signature_file)
@@ -59,6 +49,22 @@ process_signature <- function(signature_file, reference_file, output_prefix = "r
   ranks <- rank(-gene_data$log2FC)  # Rank by decreasing log2FC
   query <- stats::setNames(ranks, query_genes)
 
+  # Prepare reference data for processing
+  message("Preparing reference data for analysis...")
+
+  # Check if reference_df has gene_symbol column
+  if (!("gene_symbol" %in% colnames(reference_df))) {
+    stop("Reference dataframe must contain a 'gene_symbol' column")
+  }
+
+  # Create reference matrix with genes as row names
+  ref_data <- reference_df
+  rownames(ref_data) <- ref_data$gene_symbol
+  ref_data$gene_symbol <- NULL
+
+  # Convert to matrix format required by RCSM
+  ref <- as.matrix(ref_data)
+
   # Verify genes exist in reference
   common_up <- intersect(Up, rownames(ref))
   common_down <- intersect(Down, rownames(ref))
@@ -68,9 +74,11 @@ process_signature <- function(signature_file, reference_file, output_prefix = "r
                   length(common_down), length(Down)))
 
   if (length(common_up) == 0 || length(common_down) == 0) {
-    warning("No matching genes found in reference data. Check gene identifiers.")
-    return(NULL)
+    stop("No matching genes found in reference data. Please check your signature genes.")
   }
+
+  # Initialize results list
+  all_results <- list()
 
   # Available methods
   all_methods <- list(
@@ -111,253 +119,131 @@ process_signature <- function(signature_file, reference_file, output_prefix = "r
   )
 
   # Validate selected methods
-  invalid_methods <- setdiff(methods, names(all_methods))
+  invalid_methods <- setdiff(names(all_methods),methods)
   if (length(invalid_methods) > 0) {
-    warning("Invalid methods specified: ", paste(invalid_methods, collapse = ", "),
+    message("Invalid methods specified: ", paste(invalid_methods, collapse = ", "),
             ". Will be ignored.")
     methods <- intersect(methods, names(all_methods))
   }
 
   # Run selected scoring methods
-  results <- list()
-
   for (method in methods) {
     tryCatch({
-      results[[method]] <- all_methods[[method]]()
-
+      all_results[[method]] <- all_methods[[method]]()
+      all_results[[method]] <- cbind(compound = rownames(all_results[[method]]), all_results[[method]])
       # Save individual results
-      output_file <- paste0(output_prefix, "_", method, "_results.csv")
-      utils::write.csv(results[[method]], file = output_file, row.names = FALSE)
+      output_file <- file.path(output_dir, paste0("sig_match_", method, "_results.csv"))
+
+      utils::write.csv(all_results[[method]], file = output_file, row.names = FALSE)
       message("Saved ", method, " results to ", output_file)
     }, error = function(e) {
       warning("Error running ", method, " method: ", e$message)
     })
   }
 
-  return(results)
+  # Create summary file with top hits across all methods
+  summary_file <- file.path(output_dir, "summary_results.csv")
+  create_summary_report(all_results, summary_file)
+  message("Saved summary report to ", summary_file)
+
+  return(all_results)
 }
 
-#' Find reference files based on combinations.txt from CMap_generate_comb.R
+#' Create a summary report of top hits across all methods
 #'
-#' @param combinations_file Path to combinations.txt file
-#' @return Data frame with reference file paths and condition info
-#' @export
-find_reference_files <- function(combinations_file) {
-  # Check if combinations file exists
-  if (!file.exists(combinations_file)) {
-    stop("Combinations file not found: ", combinations_file)
-  }
-
-  # Read combinations file
-  message("Reading combinations from ", combinations_file)
-  combinations <- utils::read.table(combinations_file, header = TRUE, stringsAsFactors = FALSE)
-
-  # Create a data frame to store file paths and condition info
-  ref_files <- data.frame(
-    time = combinations$itime,
-    dose = combinations$idose,
-    cell = combinations$cell,
-    file_path = character(nrow(combinations)),
-    exists = logical(nrow(combinations)),
+#' @param results_list List of results from different methods
+#' @param output_file Path to output summary file
+#' @param top_n Number of top hits to include (default: 20)
+#'
+#' @return Invisible NULL
+#' @keywords internal
+create_summary_report <- function(results_list, output_file, top_n = 20) {
+  # Initialize summary dataframe
+  summary_df <- data.frame(
+    compound = character(),
+    method = character(),
+    Score = numeric(),
+    pValue = numeric(),
+    rank = integer(),
     stringsAsFactors = FALSE
   )
 
-  # For each combination, construct expected file path
-  for (i in 1:nrow(ref_files)) {
-    # Format the filename following the pattern from CMap_split_gctx.R
-    filename <- paste0(
-      "filtered_",
-      gsub(" ", "_", ref_files$time[i]), "_",
-      gsub(" ", "_", ref_files$dose[i]), "_",
-      ref_files$cell[i], ".csv"
-    )
+  # Extract top hits from each method
+  for (method_name in names(results_list)) {
+    result <- results_list[[method_name]]
 
-    ref_files$file_path[i] <- filename
-    ref_files$exists[i] <- file.exists(filename)
-  }
 
-  # Report on found files
-  found_files <- sum(ref_files$exists)
-  message(sprintf("Found %d/%d expected reference files", found_files, nrow(ref_files)))
+    # Get top hits
+    result$compound <- rownames(result)
+    result$rank <- rank(-result$Score)
+    top_hits <- result[result$rank <= top_n, ]
 
-  if (found_files == 0) {
-    stop("No reference files found. Make sure to run process_combinations_file() first.")
-  }
-
-  # Return only rows with existing files
-  return(ref_files[ref_files$exists, ])
-}
-
-#' Create a summary of top hits across all datasets
-#'
-#' @param all_results List of results from all reference datasets
-#' @param output_file Path to output summary file
-#' @return Invisibly returns the summary data frame
-#' @keywords internal
-create_summary <- function(all_results, output_file) {
-  # Initialize summary data frame
-  summary_data <- data.frame()
-
-  # For each condition and method, get top compounds
-  for (condition in names(all_results)) {
-    results <- all_results[[condition]]
-
-    if (is.null(results)) next
-
-    for (method in names(results)) {
-      # Get top 10 compounds or fewer if less available
-      method_results <- results[[method]]
-
-      if (nrow(method_results) == 0) next
-
-      # Sort by score (assuming higher is better, adjust if needed)
-      method_results <- method_results[order(method_results$Score, decreasing = TRUE), ]
-      top_n <- min(10, nrow(method_results))
-
-      # Add to summary
-      for (i in 1:top_n) {
-        if (i <= nrow(method_results)) {
-          row <- method_results[i, ]
-          summary_data <- rbind(summary_data, data.frame(
-            Condition = condition,
-            Method = method,
-            Rank = i,
-            Compound = as.character(row$Name),  # Adjust column name if different
-            Score = row$Score,
-            PValue = if ("P.Value" %in% colnames(row)) row$P.Value else NA
-          ))
-        }
-      }
+    if (nrow(top_hits) > 0) {
+      top_hits$method <- method_name
+      summary_df <- rbind(
+        summary_df,
+        top_hits[, c("compound", "method", "Score", "pValue", "rank")]
+      )
     }
   }
 
-  # Save summary
-  utils::write.csv(summary_data, file = output_file, row.names = FALSE)
-  message("Summary of top hits saved to ", output_file)
-  
-  return(invisible(summary_data))
+  # Sort by method and rank
+  summary_df <- summary_df[order(summary_df$method, summary_df$rank), ]
+
+  # Write to file
+  utils::write.csv(summary_df, file = output_file, row.names = FALSE)
+
+  return(invisible(NULL))
 }
 
-#' Run analysis with combinations file
+#' Complete workflow from configuration to signature matching
 #'
-#' @param combinations_file Path to combinations.txt file (default: "combinations.txt")
-#' @param sig_file Path to signature file (default: "signature.txt")
-#' @param out_dir Output directory for results (default: "results")
+#' @param config_file Path to configuration file with selected parameters
+#' @param signature_file Path to signature gene list with log2FC values
+#' @param geneinfo_file Path to the gene info file
+#' @param siginfo_file Path to the signature info file
+#' @param gctx_file Path to the GCTX file
+#' @param output_dir Directory for output files (default: "results")
 #' @param methods Vector of method names to run (default: all)
 #'        Options: "ks", "xcos", "xsum", "gsea0", "gsea1", "gsea2", "zhang"
 #' @param permutations Number of permutations for statistical testing
-#' @return List of results from all analyses
-#' @export
-run_analysis_with_combinations <- function(combinations_file = "combinations.txt",
-                                           sig_file = "signature.txt",
-                                           out_dir = "results",
-                                           methods = c("ks", "xcos", "xsum", "gsea0", "gsea1", "gsea2", "zhang"),
-                                           permutations = 100) {
-  # Create output directory if it doesn't exist
-  if (!dir.exists(out_dir)) {
-    dir.create(out_dir, recursive = TRUE)
-  }
-
-  # Find reference files based on combinations
-  ref_files_df <- find_reference_files(combinations_file)
-
-  # Process each reference file
-  all_results <- list()
-
-  message("Selected methods: ", paste(methods, collapse = ", "))
-
-  for (i in 1:nrow(ref_files_df)) {
-    ref_file <- ref_files_df$file_path[i]
-
-    # Create a condition string from time, dose, and cell
-    condition <- paste(
-      gsub(" ", "_", ref_files_df$time[i]),
-      gsub(" ", "_", ref_files_df$dose[i]),
-      ref_files_df$cell[i],
-      sep = "_"
-    )
-
-    message("\nProcessing reference file: ", ref_file)
-    message("Condition: ", condition)
-
-    # Create output prefix
-    output_prefix <- file.path(out_dir, paste0("sig_match_", condition))
-
-    # Process signature
-    results <- process_signature(
-      signature_file = sig_file,
-      reference_file = ref_file,
-      output_prefix = output_prefix,
-      permutations = permutations,
-      methods = methods
-    )
-
-    all_results[[condition]] <- results
-  }
-
-  # Create summary of top hits across all reference datasets
-  create_summary(all_results, file.path(out_dir, "summary_results.csv"))
-
-  return(all_results)
-}
-
-#' Run analysis with manually specified reference files
+#' @param verbose Logical; whether to print progress messages (default: TRUE)
 #'
-#' @param ref_pattern Pattern to match reference files (default: "filtered_*.csv")
-#' @param sig_file Path to signature file (default: "signature.txt")
-#' @param out_dir Output directory for results (default: "results")
-#' @param methods Vector of method names to run (default: all)
-#'        Options: "ks", "xcos", "xsum", "gsea0", "gsea1", "gsea2", "zhang"
-#' @param permutations Number of permutations for statistical testing
-#' @return List of results from all analyses
+#' @return List containing results from all methods
 #' @export
-run_analysis <- function(ref_pattern = "filtered_*.csv",
-                         sig_file = "signature.txt",
-                         out_dir = "results",
-                         methods = c("ks", "xcos", "xsum", "gsea0", "gsea1", "gsea2", "zhang"),
-                         permutations = 100) {
-  # Create output directory if it doesn't exist
-  if (!dir.exists(out_dir)) {
-    dir.create(out_dir, recursive = TRUE)
+run_cmap_workflow <- function(config_file, signature_file,
+                              geneinfo_file = "geneinfo_beta.txt",
+                              siginfo_file = "siginfo_beta.txt",
+                              gctx_file = "level5_beta_trt_cp_n720216x12328.gctx",
+                              output_dir = "results",
+                              methods = c("ks", "xcos", "xsum", "gsea0", "gsea1", "gsea2", "zhang"),
+                              permutations = 100,
+                              verbose = TRUE) {
+
+  # Step 1: Extract CMap data based on config file
+  if (verbose) message("Step 1: Extracting CMap data based on configuration...")
+  reference_df <- extract_cmap_data_from_config(
+    config_file = config_file,
+    geneinfo_file = geneinfo_file,
+    siginfo_file = siginfo_file,
+    gctx_file = gctx_file,
+    verbose = verbose
+  )
+
+  if (nrow(reference_df) == 0) {
+    stop("No data extracted from CMap. Please check your configuration and input files.")
   }
 
-  # Get all reference files
-  ref_files <- list.files(pattern = ref_pattern, full.names = TRUE)
+  # Step 2: Process signature against the extracted data
+  if (verbose) message("\nStep 2: Processing signature against reference data...")
+  results <- process_signature_with_df(
+    signature_file = signature_file,
+    reference_df = reference_df,
+    output_dir = output_dir,
+    permutations = permutations,
+    methods = methods
+  )
 
-  if (length(ref_files) == 0) {
-    stop("No reference files found matching pattern: ", ref_pattern)
-  }
-
-  message("Found ", length(ref_files), " reference files")
-  message("Selected methods: ", paste(methods, collapse = ", "))
-
-  # Process each reference file
-  all_results <- list()
-
-  for (ref_file in ref_files) {
-    message("\nProcessing reference file: ", ref_file)
-
-    # Extract conditions from filename (e.g., filtered_6_h_10_uM_A375.csv)
-    file_base <- tools::file_path_sans_ext(basename(ref_file))
-    conditions <- gsub("filtered_", "", file_base)
-
-    # Create output prefix
-    output_prefix <- file.path(out_dir, paste0("sig_match_", conditions))
-
-    # Process signature
-    results <- process_signature(
-      signature_file = sig_file,
-      reference_file = ref_file,
-      output_prefix = output_prefix,
-      permutations = permutations,
-      methods = methods
-    )
-
-    all_results[[conditions]] <- results
-  }
-
-  # Create summary of top hits across all reference datasets
-  create_summary(all_results, file.path(out_dir, "summary_results.csv"))
-
-  return(all_results)
+  if (verbose) message("\nWorkflow completed successfully!")
+  return(results)
 }
