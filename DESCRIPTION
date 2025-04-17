@@ -1,17 +1,45 @@
 Package: DRnew
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
+Title: Drug Response Data Analysis Using CMap Database
+Version: 0.2.0
 Authors@R: c(
     person(
-      "Jane", "Doe",
-      email = "jane@example.com",
-      role = c("aut", "cre")
+      "Hengxin Pan"
+      email = "pan.h@wehi.edu.au",
+      role = c("aut"),
+      comment = c(ORCID = "0000-0000-0000-0000")
     )
   )
-Description: More about what it does (maybe more than one line).
-    Continuation lines should be indented.
-License: What license is it under?
+Description: Provides tools for drug response data analysis with a focus on 
+    the Connectivity Map (CMap) database. It enables researchers to extract, 
+    process, and analyze drug response signatures from experimental data and 
+    match them against reference profiles from CMap. The package includes 
+    functions for parameter extraction, combination generation, data processing 
+    from GCTX files, and various signature matching methods including 
+    Kolmogorov-Smirnov, GSEA-based, and others.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
+Depends:
+    R (>= 4.1.0)
+Imports:
+    BiocManager,
+    data.table,
+    cmapR,
+    methods,
+    stats,
+    utils
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat,
+    devtools,
+    BiocStyle
+VignetteBuilder: knitr
+biocViews: 
+    GeneExpression,
+    Pharmacogenomics,
+    Software,
+    Transcriptomics,
+    DataImport
