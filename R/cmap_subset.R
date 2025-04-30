@@ -7,6 +7,7 @@
 #' @param geneinfo_file Path to the gene info file
 #' @param siginfo_file Path to the signature info file
 #' @param gctx_file Path to the GCTX file
+#' @param keep_all_genes Logical; whether to keep all genes across combinations (TRUE) or only common genes (FALSE) (default: TRUE)
 #' @param verbose Logical; whether to print progress messages (default: TRUE)
 #'
 #' @return A data frame with combined results from all combinations, with annotation
@@ -30,6 +31,7 @@ extract_cmap_data_from_config <- function(config_file,
                                           geneinfo_file = "geneinfo_beta.txt",
                                           siginfo_file = "siginfo_beta.txt",
                                           gctx_file = "level5_beta_trt_cp_n720216x12328.gctx",
+                                          keep_all_genes = TRUE,
                                           verbose = TRUE) {
 
   # Check if config file exists
@@ -47,16 +49,43 @@ extract_cmap_data_from_config <- function(config_file,
 
   # Read gene info file
   if (verbose) message("Reading gene info file...")
-  geneinfo_df <- utils::read.table(geneinfo_file, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
-  result <- get_rid(geneinfo_df)
-  rid <- result$rid
-  genenames <- result$genenames
+  tryCatch({
+    if (requireNamespace("data.table", quietly = TRUE)) {
+      geneinfo_df <- data.table::fread(geneinfo_file, sep = "\t", header = TRUE)
+    } else {
+      # If data.table is not available, use read.table with more robust parameters
+      geneinfo_df <- utils::read.table(geneinfo_file, sep = "\t", header = TRUE,
+                                       stringsAsFactors = FALSE, quote = "",
+                                       comment.char = "", fill = TRUE)
+    }
+    result <- get_rid(geneinfo_df)
+    rid <- result$rid
+    genenames <- result$genenames
+
+    if (verbose) message("Found ", length(rid), " landmark genes")
+  }, error = function(e) {
+    stop("Error reading gene info file: ", e$message)
+  })
 
   # Read siginfo file
   if (verbose) message("Reading signature info file...")
-  sig_info <- utils::read.table(siginfo_file, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
-  sig_info <- sig_info[sig_info$pert_type == "trt_cp", ]
-  sig_info <- sig_info[sig_info$is_hiq == 1, ]
+  tryCatch({
+    if (requireNamespace("data.table", quietly = TRUE)) {
+      sig_info <- data.table::fread(siginfo_file, sep = "\t", header = TRUE,
+                                    stringsAsFactors = FALSE)
+    } else {
+      # If data.table is not available, use read.table with more robust parameters
+      sig_info <- utils::read.table(siginfo_file, sep = "\t", header = TRUE,
+                                    stringsAsFactors = FALSE, quote = "",
+                                    comment.char = "", fill = TRUE)
+    }
+    sig_info <- sig_info[sig_info$pert_type == "trt_cp", ]
+    sig_info <- sig_info[sig_info$is_hiq == 1, ]
+
+    if (verbose) message("Found ", nrow(sig_info), " high-quality treatment signatures")
+  }, error = function(e) {
+    stop("Error reading signature info file: ", e$message)
+  })
 
   # Initialize results list to store all dataframes
   result_list <- list()
@@ -128,20 +157,90 @@ extract_cmap_data_from_config <- function(config_file,
   # Combine all results
   if (verbose) message("\nCombining results...")
 
-  # Create a list to hold gene expression matrices
+  # Initialize variables to hold the combined data
   combined_data <- NULL
   combined_metadata <- NULL
 
-  # Process each result
-  for (result in result_list) {
-    if (!is.null(result$data) && ncol(result$data) > 0) {
-      if (is.null(combined_data)) {
-        combined_data <- result$data
-        combined_metadata <- result$metadata
-      } else {
-        # Append columns to the existing dataframe
-        combined_data <- cbind(combined_data, result$data)
-        combined_metadata <- rbind(combined_metadata, result$metadata)
+  # Process each result based on the keep_all_genes parameter
+  if (keep_all_genes) {
+    # Strategy for keeping ALL genes across all combinations
+
+    # First, collect all unique gene names
+    all_genes <- character()
+    for (result in result_list) {
+      if (!is.null(result$data) && ncol(result$data) > 0) {
+        all_genes <- union(all_genes, rownames(result$data))
+      }
+    }
+
+    if (verbose) message("Total unique genes across all combinations: ", length(all_genes))
+
+    # Create the combined matrix with all genes and all samples
+    total_samples <- sum(sapply(result_list, function(r) {
+      if (!is.null(r$data)) ncol(r$data) else 0
+    }))
+
+    # Initialize combined data with NAs
+    combined_matrix <- matrix(NA, nrow = length(all_genes), ncol = total_samples)
+    rownames(combined_matrix) <- all_genes
+
+    # Collect all sample IDs
+    all_sample_ids <- character()
+
+    # Fill in the data for each combination
+    col_start <- 1
+    for (result in result_list) {
+      if (!is.null(result$data) && ncol(result$data) > 0) {
+        data_df <- result$data
+        num_cols <- ncol(data_df)
+
+        # Add sample IDs
+        all_sample_ids <- c(all_sample_ids, colnames(data_df))
+
+        # Fill in data for current combination
+        for (gene in rownames(data_df)) {
+          idx <- match(gene, all_genes)
+          if (!is.na(idx)) {
+            combined_matrix[idx, col_start:(col_start + num_cols - 1)] <-
+              as.numeric(data_df[gene, ])
+          }
+        }
+
+        # Combine metadata
+        if (is.null(combined_metadata)) {
+          combined_metadata <- result$metadata
+        } else {
+          combined_metadata <- rbind(combined_metadata, result$metadata)
+        }
+
+        # Update column start for next combination
+        col_start <- col_start + num_cols
+      }
+    }
+
+    # Set column names
+    colnames(combined_matrix) <- all_sample_ids
+
+    # Convert to data frame
+    combined_data <- as.data.frame(combined_matrix)
+
+  } else {
+    # Original behavior - only keep genes common to all combinations
+
+    for (result in result_list) {
+      if (!is.null(result$data) && ncol(result$data) > 0) {
+        if (is.null(combined_data)) {
+          combined_data <- result$data
+          combined_metadata <- result$metadata
+        } else {
+          # Find common genes
+          common_genes <- intersect(rownames(combined_data), rownames(result$data))
+          if (verbose) message("Common genes with previous combinations: ", length(common_genes))
+
+          # Append columns to the existing dataframe, keeping only common genes
+          combined_data <- cbind(combined_data[common_genes, ], result$data[common_genes, ])
+          combined_metadata <- rbind(combined_metadata, result$metadata)
+        }
       }
     }
   }
@@ -159,7 +258,9 @@ extract_cmap_data_from_config <- function(config_file,
   }
 
   # Add gene symbols as a column
-  final_result <- data.frame(gene_symbol = rownames(combined_data), combined_data)
+  final_result <- data.frame(gene_symbol = rownames(combined_data), combined_data,
+                             check.names = FALSE, stringsAsFactors = FALSE)
+
   # Add metadata as attributes
   attr(final_result, "metadata") <- combined_metadata
 

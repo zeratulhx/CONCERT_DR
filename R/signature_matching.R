@@ -3,15 +3,18 @@
 #' @param signature_file Path to signature gene list with log2FC values
 #' @param reference_df Dataframe containing reference data (combined across all conditions)
 #' @param output_dir Directory for output files (default: "results")
-#' @param permutations Number of permutations for statistical testing
+#' @param permutations Number of permutations for statistical testing (default: 100)
 #' @param methods Vector of method names to run (default: all)
 #'        Options: "ks", "xcos", "xsum", "gsea0", "gsea1", "gsea2", "zhang"
+#' @param topN Integer; number of top-ranked genes to use for XCos and XSum methods (default: 4)
+#' @param read_method Character; method to use for reading signature file ("auto", "fread", or "read.table") (default: "auto")
 #'
 #' @return List containing results for each method
 #' @export
 process_signature_with_df <- function(signature_file, reference_df, output_dir = "results",
                                       permutations = 100, methods = c("ks", "xcos", "xsum", "gsea0",
-                                                                      "gsea1", "gsea2", "zhang")) {
+                                                                      "gsea1", "gsea2", "zhang"),
+                                      topN = 4, read_method = "auto") {
   # Ensure RCSM is installed
   if (!requireNamespace("RCSM", quietly = TRUE)) {
     if (!requireNamespace("devtools", quietly = TRUE)) {
@@ -33,7 +36,27 @@ process_signature_with_df <- function(signature_file, reference_df, output_dir =
 
   # Read the signature file
   message("Reading signature data from ", signature_file)
-  gene_data <- utils::read.delim(signature_file, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+  tryCatch({
+    if (read_method == "auto") {
+      # Auto-detect best method
+      if (requireNamespace("data.table", quietly = TRUE)) {
+        gene_data <- data.table::fread(signature_file, sep = "\t", header = TRUE,
+                                       stringsAsFactors = FALSE, data.table = FALSE)
+      } else {
+        gene_data <- utils::read.delim(signature_file, header = TRUE, sep = "\t",
+                                       stringsAsFactors = FALSE, comment.char = "")
+      }
+    } else if (read_method == "fread" && requireNamespace("data.table", quietly = TRUE)) {
+      gene_data <- data.table::fread(signature_file, sep = "\t", header = TRUE,
+                                     stringsAsFactors = FALSE, data.table = FALSE)
+    } else {
+      # Default to read.table
+      gene_data <- utils::read.delim(signature_file, header = TRUE, sep = "\t",
+                                     stringsAsFactors = FALSE, comment.char = "")
+    }
+  }, error = function(e) {
+    stop("Error reading signature file: ", e$message)
+  })
 
   # Check if required columns exist
   if (!all(c("Gene", "log2FC") %in% colnames(gene_data))) {
@@ -88,38 +111,44 @@ process_signature_with_df <- function(signature_file, reference_df, output_dir =
     },
 
     xcos = function() {
-      message("Running XCos score...")
-      RCSM::XCosScore(refMatrix = ref, query = query[query_genes %in% rownames(ref)], topN = 4, permuteNum = permutations)
+      message(sprintf("Running XCos score with topN = %d...", topN))
+      RCSM::XCosScore(refMatrix = ref, query = query[query_genes %in% rownames(ref)],
+                      topN = topN, permuteNum = permutations)
     },
 
     xsum = function() {
-      message("Running XSum score...")
-      RCSM::XSumScore(refMatrix = ref, queryUp = common_up, queryDown = common_down, topN = 4, permuteNum = permutations)
+      message(sprintf("Running XSum score with topN = %d...", topN))
+      RCSM::XSumScore(refMatrix = ref, queryUp = common_up, queryDown = common_down,
+                      topN = topN, permuteNum = permutations)
     },
 
     gsea0 = function() {
       message("Running GSEA weight 0 score...")
-      RCSM::GSEAweight0Score(refMatrix = ref, queryUp = common_up, queryDown = common_down, permuteNum = permutations)
+      RCSM::GSEAweight0Score(refMatrix = ref, queryUp = common_up, queryDown = common_down,
+                             permuteNum = permutations)
     },
 
     gsea1 = function() {
       message("Running GSEA weight 1 score...")
-      RCSM::GSEAweight1Score(refMatrix = ref, queryUp = common_up, queryDown = common_down, permuteNum = permutations)
+      RCSM::GSEAweight1Score(refMatrix = ref, queryUp = common_up, queryDown = common_down,
+                             permuteNum = permutations)
     },
 
     gsea2 = function() {
       message("Running GSEA weight 2 score...")
-      RCSM::GSEAweight2Score(refMatrix = ref, queryUp = common_up, queryDown = common_down, permuteNum = permutations)
+      RCSM::GSEAweight2Score(refMatrix = ref, queryUp = common_up, queryDown = common_down,
+                             permuteNum = permutations)
     },
 
     zhang = function() {
       message("Running Zhang score...")
-      RCSM::ZhangScore(refMatrix = ref, queryUp = common_up, queryDown = common_down, permuteNum = permutations)
+      RCSM::ZhangScore(refMatrix = ref, queryUp = common_up, queryDown = common_down,
+                       permuteNum = permutations)
     }
   )
 
   # Validate selected methods
-  invalid_methods <- setdiff(names(all_methods),methods)
+  invalid_methods <- setdiff(methods, names(all_methods))
   if (length(invalid_methods) > 0) {
     message("Invalid methods specified: ", paste(invalid_methods, collapse = ", "),
             ". Will be ignored.")
@@ -130,10 +159,15 @@ process_signature_with_df <- function(signature_file, reference_df, output_dir =
   for (method in methods) {
     tryCatch({
       all_results[[method]] <- all_methods[[method]]()
-      all_results[[method]] <- cbind(compound = rownames(all_results[[method]]), all_results[[method]])
+
+      # Add compound names if not already included
+      if (!("compound" %in% colnames(all_results[[method]]))) {
+        all_results[[method]] <- cbind(compound = rownames(all_results[[method]]),
+                                       all_results[[method]])
+      }
+
       # Save individual results
       output_file <- file.path(output_dir, paste0("sig_match_", method, "_results.csv"))
-
       utils::write.csv(all_results[[method]], file = output_file, row.names = FALSE)
       message("Saved ", method, " results to ", output_file)
     }, error = function(e) {
@@ -148,7 +182,6 @@ process_signature_with_df <- function(signature_file, reference_df, output_dir =
 
   return(all_results)
 }
-
 #' Create a summary report of top hits across all methods
 #'
 #' @param results_list List of results from different methods
@@ -206,7 +239,10 @@ create_summary_report <- function(results_list, output_file, top_n = 20) {
 #' @param output_dir Directory for output files (default: "results")
 #' @param methods Vector of method names to run (default: all)
 #'        Options: "ks", "xcos", "xsum", "gsea0", "gsea1", "gsea2", "zhang"
-#' @param permutations Number of permutations for statistical testing
+#' @param topN Integer; number of top-ranked genes to use for XCos and XSum methods (default: 4)
+#' @param permutations Number of permutations for statistical testing (default: 100)
+#' @param keep_all_genes Logical; whether to keep all genes when extracting CMap data (default: TRUE)
+#' @param read_method Character; method to use for reading signature file ("auto", "fread", or "read.table") (default: "auto")
 #' @param verbose Logical; whether to print progress messages (default: TRUE)
 #'
 #' @return List containing results from all methods
@@ -217,7 +253,10 @@ run_cmap_workflow <- function(config_file, signature_file,
                               gctx_file = "level5_beta_trt_cp_n720216x12328.gctx",
                               output_dir = "results",
                               methods = c("ks", "xcos", "xsum", "gsea0", "gsea1", "gsea2", "zhang"),
+                              topN = 4,
                               permutations = 100,
+                              keep_all_genes = TRUE,
+                              read_method = "auto",
                               verbose = TRUE) {
 
   # Step 1: Extract CMap data based on config file
@@ -227,6 +266,7 @@ run_cmap_workflow <- function(config_file, signature_file,
     geneinfo_file = geneinfo_file,
     siginfo_file = siginfo_file,
     gctx_file = gctx_file,
+    keep_all_genes = keep_all_genes,
     verbose = verbose
   )
 
@@ -241,7 +281,9 @@ run_cmap_workflow <- function(config_file, signature_file,
     reference_df = reference_df,
     output_dir = output_dir,
     permutations = permutations,
-    methods = methods
+    methods = methods,
+    topN = topN,
+    read_method = read_method
   )
 
   if (verbose) message("\nWorkflow completed successfully!")
