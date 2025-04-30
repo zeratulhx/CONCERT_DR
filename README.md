@@ -30,23 +30,23 @@ DRnew depends on the following packages:
 ```r
 library(DRnew)
 
-# Step 1: Extract parameters from CMap siginfo file
+# Step 1: Extract parameters from CMap siginfo file and generate configuration file
 params <- extract_cmap_parameters("path/to/siginfo_beta.txt")
 
-# Step 2: Generate combinations of time points, doses, and cell lines
-combinations <- generate_combinations_from_config("conf/cmap_options.conf")
+# Step 2: Process combinations to extract data
+ref_df <- extract_cmap_data_from_config(
+  config_file = "conf/cmap_options.conf",
+  geneinfo_file = "/home/users/allstaff/pan.h/vast/DR_databases/geneinfo_beta.txt",
+  siginfo_file = "/home/users/allstaff/pan.h/vast/DR_databases/siginfo_beta.txt",
+  gctx_file = "/home/users/allstaff/pan.h/vast/DR_databases/level5_beta_all_n1201944x12328.gctx",
+)
 
-# Step 3: Process combinations to extract data
-process_combinations(combinations,
-                     output_dir = "output",
-                     geneinfo_file = "path/to/geneinfo_beta.txt",
-                     siginfo_file = "path/to/siginfo_beta.txt",
-                     gctx_file = "path/to/level5_beta_trt_cp_n720216x12328.gctx")
-
-# Step 4: Match your drug response signature against reference profiles
-run_analysis_with_combinations(combinations_file = "combinations.txt",
-                               sig_file = "signature.txt",
-                               out_dir = "results")
+# Step 3: Match your drug response signature against reference profiles
+process_signature_with_df(reference_df = ref_df,
+                          signature_file = "signature.csv",
+                          output_dir = "results",
+                          methods="xsum",
+                          topN=200)
 ```
 
 ## Acquiring CMap Data
