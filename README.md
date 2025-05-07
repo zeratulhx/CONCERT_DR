@@ -152,8 +152,8 @@ head(results$results$ks) # Top hits for KS method
 CONCERTDR provides access to various signature matching methods:
 
 1. **KS Score** (`ks`): Kolmogorov-Smirnov statistic based method
-2. **XCos Score** (`xcos`): Extended cosine similarity method
-3. **XSum Score** (`xsum`): Extended sum score method
+2. **XCos Score** (`xcos`): Extreme cosine similarity method
+3. **XSum Score** (`xsum`): Extreme sum score method
 4. **GSEA Weight 0 Score** (`gsea0`): Gene Set Enrichment Analysis without weighting
 5. **GSEA Weight 1 Score** (`gsea1`): Gene Set Enrichment Analysis with weight 1
 6. **GSEA Weight 2 Score** (`gsea2`): Gene Set Enrichment Analysis with weight 2
