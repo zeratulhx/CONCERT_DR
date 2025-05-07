@@ -9,6 +9,7 @@ extract_cmap_data_from_config(
   geneinfo_file = "geneinfo_beta.txt",
   siginfo_file = "siginfo_beta.txt",
   gctx_file = "level5_beta_trt_cp_n720216x12328.gctx",
+  keep_all_genes = TRUE,
   verbose = TRUE
 )
 }
@@ -20,6 +21,8 @@ extract_cmap_data_from_config(
 \item{siginfo_file}{Path to the signature info file}
 
 \item{gctx_file}{Path to the GCTX file}
+
+\item{keep_all_genes}{Logical; whether to keep all genes across combinations (TRUE) or only common genes (FALSE) (default: TRUE)}
 
 \item{verbose}{Logical; whether to print progress messages (default: TRUE)}
 }

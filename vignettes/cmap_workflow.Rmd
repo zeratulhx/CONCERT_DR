@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 
 # CMap Data Analysis Workflow
 
-This vignette provides a detailed walkthrough of the CMap data analysis workflow using the DRnew package. We'll cover the process from extracting parameters from the CMap database to processing combinations and generating the final data extracts.
+This vignette provides a detailed walkthrough of the CMap data analysis workflow using the CONCERTDR package. We'll cover the process from extracting parameters from the CMap database to processing combinations and generating the final data extracts.
 
 ## Prerequisites
 
@@ -32,7 +32,7 @@ Before starting this workflow, you should have access to the following CMap data
 These files can be downloaded from the [Broad Institute's CMap website](https://clue.io/) after registration.
 
 ```{r setup}
-library(DRnew)
+library(CONCERTDR)
 ```
 
 ## Step 1: Extract Parameters from CMap Data
@@ -206,7 +206,7 @@ This will guide you through the process with prompts for each step.
 
 ## Conclusion
 
-This vignette has walked through the essential steps for extracting data from the CMap database using the DRnew package. The extracted data can then be used for signature matching, as described in the [Signature Matching vignette](signature_matching.html).
+This vignette has walked through the essential steps for extracting data from the CMap database using the CONCERTDR package. The extracted data can then be used for signature matching, as described in the [Signature Matching vignette](signature_matching.html).
 
 ## Session Info
 

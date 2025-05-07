@@ -9,7 +9,10 @@ process_signature_with_df(
   reference_df,
   output_dir = "results",
   permutations = 100,
-  methods = c("ks", "xcos", "xsum", "gsea0", "gsea1", "gsea2", "zhang")
+  methods = c("ks", "xcos", "xsum", "gsea0", "gsea1", "gsea2", "zhang"),
+  topN = 4,
+  read_method = "auto",
+  save_files = TRUE
 )
 }
 \arguments{
@@ -19,13 +22,25 @@ process_signature_with_df(
 
 \item{output_dir}{Directory for output files (default: "results")}
 
-\item{permutations}{Number of permutations for statistical testing}
+\item{permutations}{Number of permutations for statistical testing (default: 100)}
 
 \item{methods}{Vector of method names to run (default: all)
 Options: "ks", "xcos", "xsum", "gsea0", "gsea1", "gsea2", "zhang"}
+
+\item{topN}{Integer; number of top-ranked genes to use for XCos and XSum methods (default: 4)}
+
+\item{read_method}{Character; method to use for reading signature file ("auto", "fread", or "read.table") (default: "auto")}
+
+\item{save_files}{Logical; whether to save results to files (default: TRUE)}
 }
 \value{
-List containing results for each method
+A structured list containing:
+  \item{results}{List containing results for each method}
+  \item{summary}{Data frame of top hits across all methods}
+  \item{gene_data}{Original signature gene data}
+  \item{settings}{List of parameters used for the analysis}
+  \item{common_genes}{Counts of genes found in reference data}
+  Use print() or summary() methods to get a quick overview of results
 }
 \description{
 Process drug response signatures against reference data in a dataframe

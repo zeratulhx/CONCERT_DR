@@ -1,14 +1,14 @@
-# CONCERT-DR: CONtext-aware Cellular and Tissue-specific Expression for Drug Repurposing
+# CONCERTDR: CONtext-aware Cellular and Tissue-specific Expression for Drug Repurposing
 
 ## Overview
 
-CONCERT-DR is an R package that provides a comprehensive suite of tools for drug response data analysis, with a particular focus on working with the Connectivity Map (CMap) database. It enables researchers to efficiently extract, process, and match drug response signatures from their experimental data with reference profiles from CMap.
+CONCERTDR is an R package that provides a comprehensive suite of tools for drug response data analysis, with a particular focus on working with the Connectivity Map (CMap) database. It enables researchers to efficiently extract, process, and match drug response signatures from their experimental data with reference profiles from CMap.
 
 ## Installation
 
 ### Dependencies
 
-Before installing DRnew, ensure you have these prerequisites:
+Before installing CONCERTDR, ensure you have these prerequisites:
 
 1. R (version 4.1.0 or higher)
 2. Bioconductor packages - will be installed automatically if missing
@@ -26,7 +26,7 @@ Before installing DRnew, ensure you have these prerequisites:
 # Install devtools if not already installed
 install.packages("devtools")
 
-# Install DRnew from GitHub
+# Install CONCERTDR from GitHub
 devtools::install_github("zeratulhx/CONCERT_DR")
 ```
 
@@ -52,7 +52,7 @@ Alternatively, you can use our helper script to download the files:
 dir.create("cmap_data")
 
 # Source the download script
-source(system.file("scripts", "download_databases.R", package = "CONCERT_DR"))
+source(system.file("scripts", "download_databases.R", package = "CONCERTDR"))
 
 # This will guide you through the download process
 download_cmap_data("cmap_data")
@@ -65,7 +65,7 @@ download_cmap_data("cmap_data")
 First, we need to extract experimental parameters from the CMap database. This will create a configuration file that lists all available time points, dosages, and cell lines.
 
 ```r
-library(DRnew)
+library(CONCERTDR)
 
 # Extract parameters and create config file
 params <- extract_cmap_parameters(
@@ -149,7 +149,7 @@ head(results$results$ks) # Top hits for KS method
 
 ## Available Signature Matching Methods
 
-DRnew provides access to various signature matching methods:
+CONCERTDR provides access to various signature matching methods:
 
 1. **KS Score** (`ks`): Kolmogorov-Smirnov statistic based method
 2. **XCos Score** (`xcos`): Extended cosine similarity method

@@ -12,7 +12,10 @@ run_cmap_workflow(
   gctx_file = "level5_beta_trt_cp_n720216x12328.gctx",
   output_dir = "results",
   methods = c("ks", "xcos", "xsum", "gsea0", "gsea1", "gsea2", "zhang"),
+  topN = 4,
   permutations = 100,
+  keep_all_genes = TRUE,
+  read_method = "auto",
   verbose = TRUE
 )
 }
@@ -32,7 +35,13 @@ run_cmap_workflow(
 \item{methods}{Vector of method names to run (default: all)
 Options: "ks", "xcos", "xsum", "gsea0", "gsea1", "gsea2", "zhang"}
 
-\item{permutations}{Number of permutations for statistical testing}
+\item{topN}{Integer; number of top-ranked genes to use for XCos and XSum methods (default: 4)}
+
+\item{permutations}{Number of permutations for statistical testing (default: 100)}
+
+\item{keep_all_genes}{Logical; whether to keep all genes when extracting CMap data (default: TRUE)}
+
+\item{read_method}{Character; method to use for reading signature file ("auto", "fread", or "read.table") (default: "auto")}
 
 \item{verbose}{Logical; whether to print progress messages (default: TRUE)}
 }

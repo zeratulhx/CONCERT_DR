@@ -7,7 +7,7 @@
     missing_bioc <- intersect(missing_packages, c("cmapR"))
     missing_cran <- setdiff(missing_packages, missing_bioc)
 
-    warning_msg <- "DRnew depends on the following packages that are not installed: "
+    warning_msg <- "CONCERTDR depends on the following packages that are not installed: "
 
     if (length(missing_cran) > 0) {
       warning_msg <- paste0(warning_msg,
@@ -28,8 +28,8 @@
 }
 
 .onAttach <- function(libname, pkgname) {
-  packageStartupMessage("DRnew: Drug Response Data Analysis Tools")
-  packageStartupMessage("Version: ", utils::packageVersion("DRnew"))
+  packageStartupMessage("CONCERTDR: Drug Response Data Analysis Tools")
+  packageStartupMessage("Version: ", utils::packageVersion("CONCERTDR"))
 
   # Add recommendation to install data.table if not present
   if (!requireNamespace("data.table", quietly = TRUE)) {

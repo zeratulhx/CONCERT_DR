@@ -17,9 +17,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Signature Matching with DRnew
+# Signature Matching with CONCERTDR
 
-This vignette demonstrates how to match drug response signatures against reference profiles extracted from the CMap database using the DRnew package. We'll cover the various matching methods available and how to interpret the results.
+This vignette demonstrates how to match drug response signatures against reference profiles extracted from the CMap database using the CONCERTDR package. We'll cover the various matching methods available and how to interpret the results.
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ Before using this vignette, you should have:
 2. Prepared a signature file with genes and their log2 fold change values
 
 ```{r setup}
-library(DRnew)
+library(CONCERTDR)
 ```
 
 ## Signature File Format
@@ -51,7 +51,7 @@ BRCA1	-2.1
 
 ## Available Matching Methods
 
-DRnew provides access to various signature matching methods through the RCSM package:
+CONCERTDR provides access to various signature matching methods through the RCSM package:
 
 1. **KS Score** (`ks`): Kolmogorov-Smirnov statistic based method
 2. **XCos Score** (`xcos`): Extended cosine similarity method
@@ -129,7 +129,7 @@ results <- process_signature_with_df(
 
 ## Complete Workflow in One Function
 
-For convenience, DRnew provides a function that combines the extraction and matching steps:
+For convenience, CONCERTDR provides a function that combines the extraction and matching steps:
 
 ```{r complete_workflow}
 all_results <- run_cmap_workflow(
@@ -170,7 +170,7 @@ significant_hits <- ks_results[ks_results$pValue < 0.05, ]
 
 ## Visualizing Results
 
-You can create visualizations of your results (not included in DRnew, but using standard R plotting):
+You can create visualizations of your results (not included in CONCERTDR, but using standard R plotting):
 
 ```{r visualize, eval=FALSE}
 library(ggplot2)
@@ -202,7 +202,7 @@ It's often a good idea to try multiple methods and compare the results.
 
 ## Interactive Method Selection
 
-If you're not sure which methods to use, DRnew provides an interactive selection function:
+If you're not sure which methods to use, CONCERTDR provides an interactive selection function:
 
 ```{r interactive_methods}
 methods <- select_methods_interactive()

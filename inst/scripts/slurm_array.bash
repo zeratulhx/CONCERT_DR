@@ -7,9 +7,9 @@
 args <- commandArgs(trailingOnly = TRUE)
 output_dir <- if (length(args) > 0) args[1] else "databases"
 
-# Load the DRnew package
-if (!require("DRnew")) {
-  stop("Package 'DRnew' is required but not installed. Please install it first.")
+# Load the CONCERTDR package
+if (!require("CONCERTDR")) {
+  stop("Package 'CONCERTDR' is required but not installed. Please install it first.")
 }
 
 message("Starting download of CMap databases to directory: ", output_dir)

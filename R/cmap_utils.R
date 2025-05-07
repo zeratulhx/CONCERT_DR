@@ -98,7 +98,7 @@ generate_slurm_script <- function(combinations_file, output_file = "run_analysis
     paste0("#SBATCH --mem=", memory),
     paste0("#SBATCH --array=1-", total_combinations),
     "# Run the R script with the combinations file",
-    paste0("Rscript -e \"DRnew::process_combinations_file('", combinations_file, "')\"")
+    paste0("Rscript -e \"CONCERTDR::process_combinations_file('", combinations_file, "')\"")
   )
   
   # Write SLURM script to file

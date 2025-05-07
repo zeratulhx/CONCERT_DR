@@ -2,10 +2,10 @@
 % Please edit documentation in R/demo.R
 \name{demonstrate_workflow}
 \alias{demonstrate_workflow}
-\title{Demonstrate DRnew Workflow}
+\title{Demonstrate CONCERTDR Workflow}
 \usage{
 demonstrate_workflow(
-  demo_dir = "DRnew_demo",
+  demo_dir = "CONCERTDR_demo",
   use_minimal = TRUE,
   gctx_file = "inst/extdata/level5_beta_trt_cp_n720216x12328.gctx",
   geneinfo_file = "inst/extdata/geneinfo_beta.txt",
@@ -24,7 +24,7 @@ demonstrate_workflow(
 \item{siginfo_file}{Path to siginfo file (if available)}
 }
 \description{
-This function demonstrates the full workflow of the DRnew package
+This function demonstrates the full workflow of the CONCERTDR package
 with example data. Users can run this to see how the package works
 in practice. It extracts a small subset of data from a GCTX file
 to create a realistic reference for signature matching.

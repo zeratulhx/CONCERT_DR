@@ -1,8 +1,9 @@
-Package: DRnew
+Package: CONCERTDR
 Type: Package
 Title: Drug Response Data Analysis Using CMap Database
-Version: 0.2.0
+Version: 0.2.2
 Author: Hengxin Pan <pan.h@wehi.edu.au>
+Maintainer: Hengxin Pan <pan.h@wehi.edu.au>
 Description: Provides tools for drug response data analysis with a focus on 
     the Connectivity Map (CMap) database. It enables researchers to extract, 
     process, and analyze drug response signatures from experimental data and 
