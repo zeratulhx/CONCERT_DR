@@ -40,10 +40,15 @@ To use the full functionality of this package, you need access to the following 
 
 ### Obtaining CMap Data 
 
-1. Navigate to [Connectivity Map Portal (clue.io)](https://clue.io/)
+1. Navigate to [Connectivity Map Portal (clue.io)](https://clue.io/releases/data-dashboard)
 2. Download the required files:
-   - CMap L1000 Data: Level 5 (GCTx): `level5_beta_trt_cp_n720216x12328.gctx`
+   - CMap L1000 Data: Level 5 (GCTx): `level5_beta_all_n1201944x12328.gctx`(recommended)
+     or
+     any of the GCTx file in your interest
+   
    - Metadata files: `siginfo_beta.txt` and `geneinfo_beta.txt`
+   
+The description of the differences between these files can be found in the 'LINCS2020 Release Metadata Field Definitions.xlsx' provided in the website.
 
 Alternatively, you can use our helper script to download the files:
 
@@ -60,59 +65,42 @@ download_cmap_data("cmap_data")
 
 ## Complete Workflow Tutorial
 
-### Step 1: Extract Parameters from CMap
+### Step 1: Subsetting CMap for signatures of interest
 
-First, we need to extract experimental parameters from the CMap database. This will create a configuration file that lists all available time points, dosages, and cell lines.
+First, we need to extract experimental parameters from the CMap database. This will create a file that contains all available time points, dosages, and cell lines for certain type of perturbation.
 
+For this pipeline, you can simply filter out the parameters you are interested in by making a subset of the 'siginfo_beta.txt' file. Currently only four parameters are supported:
+  - `pert_type`: Type of perturbation (e.g., "trt_cp" for chemical treatments)
+  - `pert_itime`: Time of treatment (e.g., "6h", "24h")
+  - `pert_idose`: Dosage of the treatment (e.g., "10uM", "100nM")
+  - `cell`: Cell line used in the experiment (e.g., "A375", "MCF7")
+
+For interactively selecting these parameters or see what's available inside the database, you can simply run:
 ```r
 library(CONCERTDR)
 
-# Extract parameters and create config file
-params <- extract_cmap_parameters(
-  siginfo_file = "path/to/siginfo_beta.txt",
-  config_dir = "conf",
-  config_filename = "cmap_options.conf"
-)
+filtered_siginfo <- subset_siginfo_beta("path/to/siginfo_beta.txt",
+                                interactive = TRUE,
+                                verbose = TRUE) 
 ```
-
-This will create a file at `conf/cmap_options.conf` with all available parameters. You can edit this file to select specific parameters or keep all of them.
-
-### Step 2: Generate Combinations
-
-After editing the configuration file (if needed), generate combinations of parameters:
-
+or you can use the filters parameter in non-interactive mode:
 ```r
-# Generate combinations based on the config file
-combinations <- generate_combinations_from_config("conf/cmap_options.conf")
-
-# Examine the combinations
-head(combinations)
-```
-
-### Step 3: Extract Data from CMap
-
-Now you can extract the expression data for these combinations:
-
+filtered_siginfo <- subset_siginfo_beta(
+   "path/to/siginfo_beta.txt",
+   interactive = FALSE,
+   filters = list(
+     pert_type = "trt_cp",
+     pert_itime = c("6 h", "24 h"),
+     pert_idose = "10 uM",
+     cell_iname = c("A375", "MCF7")
+     ))
 ```r
-# Option 1: Process combinations to create individual files
-output_files <- process_combinations(
-  combinations = combinations,
-  output_dir = "output",
-  geneinfo_file = "path/to/geneinfo_beta.txt",
-  siginfo_file = "path/to/siginfo_beta.txt",
-  gctx_file = "path/to/level5_beta_trt_cp_n720216x12328.gctx"
-)
 
-# Option 2: Extract all data into a single data frame
-reference_df <- extract_cmap_data_from_config(
-  config_file = "conf/cmap_options.conf",
-  geneinfo_file = "path/to/geneinfo_beta.txt",
-  siginfo_file = "path/to/siginfo_beta.txt",
-  gctx_file = "path/to/level5_beta_trt_cp_n720216x12328.gctx"
-)
-```
 
-### Step 4: Prepare Your Signature File
+
+You can also create a file by setting 'output=YOUR_PATH'. You can edit this file to select specific parameters or keep all of them.
+
+### Step 2: Prepare Your Signature File
 
 Create a tab-delimited signature file containing your gene signature. The file must have at least these two columns:
 - `Gene`: Gene symbols matching those in CMap
@@ -127,7 +115,24 @@ MYC     3.2
 BRCA1   -2.1
 ```
 
-### Step 5: Match Your Signature Against Reference Profiles
+### Step 3: Extract Data from CMap
+
+Now you can extract the expression data from CMap for your selected parameters:
+
+```r
+
+
+reference_df <- extract_cmap_data_from_siginfo(
+  geneinfo_file = "path/to/geneinfo_beta.txt",
+  siginfo_file = "path/to/siginfo_beta.txt",
+  gctx_file = "path/to/level5_beta_trt_cp_n720216x12328.gctx",
+  filter_quality = TRUE, # Use 978 landmark genes only
+)
+```
+
+
+
+### Step 4: Match Your Signature Against Reference Profiles
 
 ```r
 # Match your signature against the reference data
@@ -214,7 +219,6 @@ generate_slurm_script(
 # Submit the job from the command line:
 # sbatch run_cmap_extract.sh
 ```
-
 
 ## License
 
