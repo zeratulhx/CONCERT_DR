@@ -36,7 +36,7 @@ To use the full functionality of this package, you need access to the following 
 
 1. **siginfo_beta.txt**: Contains metadata about all signatures in the database
 2. **geneinfo_beta.txt**: Contains information about all genes in the database
-3. **level5_beta_trt_cp_n720216x12328.gctx**: Contains the expression data for all signatures
+3. ***.gctx**: Contains the expression data for perturbation signatures
 
 ### Obtaining CMap Data 
 
