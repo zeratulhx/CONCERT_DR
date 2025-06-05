@@ -42,20 +42,14 @@ extract_cmap_parameters <- function(siginfo_file, write_config = TRUE,
     output_file <- file.path(config_dir, config_filename)
   }
 
-  # Read siginfo file using data.table for robustness if available
+  # Read siginfo file
   if (verbose) message("Reading signature info from ", siginfo_file)
-  tryCatch({
-    if (requireNamespace("data.table", quietly = TRUE)) {
-      sig_info <- data.table::fread(siginfo_file, sep = "\t", header = TRUE,
-                                    quote = "", stringsAsFactors = FALSE)
-    } else {
-      sig_info <- utils::read.table(siginfo_file, sep = "\t", header = TRUE,
-                                    quote = "", comment.char = "",
-                                    fill = TRUE, stringsAsFactors = FALSE)
-    }
-  }, error = function(e) {
-    stop("Failed to read siginfo file. Make sure it's properly formatted: ", e$message)
-  })
+  sig_info <- try(utils::read.table(siginfo_file, sep = "\t", header = TRUE,
+                                    quote = "", stringsAsFactors = FALSE))
+
+  if (inherits(sig_info, "try-error")) {
+    stop("Failed to read siginfo file. Make sure it's properly formatted.")
+  }
 
   # Filter for treatment compounds with high quality if requested
   if (filter_quality) {
@@ -118,6 +112,7 @@ extract_cmap_parameters <- function(siginfo_file, write_config = TRUE,
 
   return(invisible(result))
 }
+
 #' Process combinations by extracting data for each
 #'
 #' @param combinations Data frame of combinations to process
@@ -147,11 +142,11 @@ extract_cmap_parameters <- function(siginfo_file, write_config = TRUE,
 #'
 #' @export
 process_combinations <- function(combinations, output_dir = "output",
-                                geneinfo_file = "geneinfo_beta.txt",
-                                siginfo_file = "siginfo_beta.txt",
-                                gctx_file = "level5_beta_trt_cp_n720216x12328.gctx",
-                                install_packages = FALSE,
-                                verbose = TRUE) {
+                                 geneinfo_file = "geneinfo_beta.txt",
+                                 siginfo_file = "siginfo_beta.txt",
+                                 gctx_file = "level5_beta_trt_cp_n720216x12328.gctx",
+                                 install_packages = FALSE,
+                                 verbose = TRUE) {
   # Check required packages
   required_packages <- c("BiocManager", "data.table", "cmapR")
   missing_packages <- setdiff(required_packages, utils::installed.packages()[,"Package"])
@@ -205,7 +200,7 @@ process_combinations <- function(combinations, output_dir = "output",
     } else {
       sig_info <- utils::read.table(siginfo_file, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
     }
-    sig_info <- sig_info[sig_info$pert_type == "trt_cp", ]
+    #sig_info <- sig_info[sig_info$pert_type == "trt_cp", ]
     sig_info <- sig_info[sig_info$is_hiq == 1, ]
 
     if (verbose) message("Found ", nrow(sig_info), " high-quality treatment signatures")
