@@ -94,7 +94,7 @@ filtered_siginfo <- subset_siginfo_beta(
      pert_idose = "10 uM",
      cell_iname = c("A375", "MCF7")
      ))
-```r
+```
 
 
 
@@ -199,26 +199,6 @@ CONCERTDR provides access to various signature matching methods:
 | `interactive_cmap_workflow()` | Run an interactive command-line workflow |
 | `generate_slurm_script()` | Generate a SLURM submission script for HPC |
 
-## Example: Batch Processing with SLURM
-
-For large datasets, you can use a high-performance computing cluster with SLURM:
-
-```r
-# Save combinations to a file
-write.table(combinations, file = "combinations.txt", row.names = FALSE)
-
-# Generate a SLURM submission script
-generate_slurm_script(
-  combinations_file = "combinations.txt",
-  output_file = "run_cmap_extract.sh",
-  job_name = "cmap_extract",
-  wall_time = "04:00:00",
-  memory = "24G"
-)
-
-# Submit the job from the command line:
-# sbatch run_cmap_extract.sh
-```
 
 ## License
 
