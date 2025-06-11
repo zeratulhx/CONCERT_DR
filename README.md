@@ -100,6 +100,12 @@ filtered_siginfo <- subset_siginfo_beta(
 
 You can also create a file by setting 'output=YOUR_PATH'. You can edit this file to select specific parameters or keep all of them.
 
+The purt_type parameters is defined by LINCS2020 as follows:
+
+![image](https://github.com/user-attachments/assets/02ef148d-736b-4c02-92b5-5fde0935db17)
+
+
+
 ### Step 2: Prepare Your Signature File
 
 Create a tab-delimited signature file containing your gene signature. The file must have at least these two columns:
