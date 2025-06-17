@@ -37,6 +37,7 @@ To use the full functionality of this package, you need access to the following 
 1. **siginfo_beta.txt**: Contains metadata about all signatures in the database
 2. **geneinfo_beta.txt**: Contains information about all genes in the database
 3. ***.gctx**: Contains the expression data for perturbation signatures
+4. Optional***repurposing_drugs.txt**: Contains the clinical state of drugs for step 5.
 
 ### Obtaining CMap Data 
 
@@ -62,6 +63,8 @@ source(system.file("scripts", "download_databases.R", package = "CONCERTDR"))
 # This will guide you through the download process
 download_cmap_data("cmap_data")
 ```
+
+Also, the repurposing_drugs.txt is available at [https://s3.amazonaws.com/data.clue.io/repurposing/downloads/repurposing_drugs_20200324.txt] on Broad Institute website.
 
 ## Complete Workflow Tutorial
 
@@ -132,7 +135,7 @@ reference_df <- extract_cmap_data_from_siginfo(
   geneinfo_file = "path/to/geneinfo_beta.txt",
   siginfo_file = "path/to/siginfo_beta.txt",
   gctx_file = "path/to/level5_beta_trt_cp_n720216x12328.gctx",
-  filter_quality = TRUE, # Use 978 landmark genes only
+  filter_quality = TRUE, # Use hiq=1 high quality signatures only
 )
 ```
 
@@ -156,6 +159,17 @@ print(results)           # Overview of results
 summary(results)         # Top compounds across methods
 head(results$results$ks) # Top hits for KS method
 
+```
+
+### Step 5(Optional): Annotate your drugs from cmap id
+
+```r
+annotate <- annotate_drug_results(
+  results_df = results$results$ks,
+  sig_info_file = filtered_siginfo,
+  comp_info_file = "path/to/compoundinfo_beta.txt",
+  drug_info_file = "/path/to/repurposing_drugs_20200324.txt"
+)
 ```
 
 ## Available Signature Matching Methods
