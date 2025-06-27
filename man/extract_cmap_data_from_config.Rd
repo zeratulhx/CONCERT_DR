@@ -10,7 +10,8 @@ extract_cmap_data_from_config(
   siginfo_file = "siginfo_beta.txt",
   gctx_file = "level5_beta_trt_cp_n720216x12328.gctx",
   keep_all_genes = TRUE,
-  verbose = TRUE
+  verbose = TRUE,
+  landmark = TRUE
 )
 }
 \arguments{

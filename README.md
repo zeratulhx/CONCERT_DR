@@ -218,7 +218,7 @@ CONCERTDR provides access to various signature matching methods:
 ### Parameter Extraction and Management
 
 | Function | Description |
-|-------------------------------|----------------------------------------|
+|----|----|
 | `extract_cmap_parameters()` | Extracts experimental parameters from siginfo_beta.txt |
 | `create_cmap_config_template()` | Creates a template configuration file |
 | `read_cmap_config()` | Reads a configuration file |
@@ -227,7 +227,7 @@ CONCERTDR provides access to various signature matching methods:
 ### Data Extraction
 
 | Function | Description |
-|-------------------------------|----------------------------------------|
+|----|----|
 | `extract_cmap_data_from_config()` | Extracts data for all combinations into a data frame |
 | `process_combinations()` | Processes combinations to extract data into individual files |
 | `process_combinations_file()` | Processes combinations from a file (for SLURM jobs) |
@@ -235,14 +235,14 @@ CONCERTDR provides access to various signature matching methods:
 ### Signature Matching
 
 | Function | Description |
-|-------------------------------|----------------------------------------|
+|----|----|
 | `process_signature_with_df()` | Matches signature against reference data frame |
 | `run_cmap_workflow()` | Runs the complete workflow from config to matching |
 
 ### Utilities
 
 | Function                       | Description                                |
-|-------------------------------|----------------------------------------|
+|--------------------------------|--------------------------------------------|
 | `select_items_interactive()`   | Interactively select items from a list     |
 | `select_methods_interactive()` | Interactively select matching methods      |
 | `interactive_cmap_workflow()`  | Run an interactive command-line workflow   |

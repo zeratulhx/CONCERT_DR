@@ -4,7 +4,7 @@
 \alias{get_rid}
 \title{Get Gene IDs and Gene Names for Landmark Genes}
 \usage{
-get_rid(geneinfo_df)
+get_rid(geneinfo_df, landmark = TRUE)
 }
 \arguments{
 \item{geneinfo_df}{Data frame containing gene information}

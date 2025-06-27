@@ -2,14 +2,15 @@
 % Please edit documentation in R/subset_siginfo_beta.R
 \name{subset_siginfo_beta}
 \alias{subset_siginfo_beta}
-\title{Subset siginfo_beta file interactively}
+\title{Subset siginfo_beta file interactively with smart preview}
 \usage{
 subset_siginfo_beta(
   siginfo_file,
   output_file = NULL,
   interactive = TRUE,
   filters = NULL,
-  verbose = TRUE
+  verbose = TRUE,
+  show_preview = TRUE
 )
 }
 \arguments{
@@ -22,17 +23,20 @@ subset_siginfo_beta(
 \item{filters}{List of pre-defined filters to apply in non-interactive mode}
 
 \item{verbose}{Logical; whether to print progress messages (default: TRUE)}
+
+\item{show_preview}{Logical; whether to show preview of subsequent options (default: TRUE)}
 }
 \value{
 A filtered data frame of the siginfo file
 }
 \description{
-This function allows interactive exploration and filtering of the siginfo_beta file
-based on available values in key columns (pert_type, pert_itime, pert_idose, cell_iname).
+Enhanced interactive filtering that shows what options will be available
+in subsequent parameters based on your current selection, helping you make
+informed decisions about the filtering sequence.
 }
 \examples{
 \dontrun{
-# Interactive mode - will prompt for selections
+# Interactive mode with smart preview of downstream options
 filtered_siginfo <- subset_siginfo_beta("path/to/siginfo_beta.txt")
 
 # Non-interactive mode with pre-defined filters

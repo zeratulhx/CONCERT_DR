@@ -11,7 +11,8 @@ extract_cmap_data_from_siginfo(
   max_signatures = NULL,
   filter_quality = TRUE,
   keep_all_genes = TRUE,
-  verbose = TRUE
+  verbose = TRUE,
+  landmark = TRUE
 )
 }
 \arguments{
