@@ -32,7 +32,8 @@ extract_cmap_data_from_config <- function(config_file,
                                           siginfo_file = "siginfo_beta.txt",
                                           gctx_file = "level5_beta_trt_cp_n720216x12328.gctx",
                                           keep_all_genes = TRUE,
-                                          verbose = TRUE) {
+                                          verbose = TRUE,
+                                          landmark=TRUE) {
 
   # Check if config file exists
   if (!file.exists(config_file)) {
@@ -64,7 +65,7 @@ extract_cmap_data_from_config <- function(config_file,
       stop("geneinfo_file must be a filename or a data.frame.")
     }
 
-    result <- get_rid(geneinfo_df)
+    result <- get_rid(geneinfo_df,landmark)
     rid <- result$rid
     genenames <- result$genenames
 
@@ -372,7 +373,7 @@ extract_cmap_data_from_siginfo <- function(siginfo_file = "siginfo_beta.txt",
   }
 
   # Parse gene info
-  result <- get_rid(geneinfo_df)
+  result <- get_rid(geneinfo_df,landmark)
   rid <- result$rid
   genenames <- result$genenames
   if (verbose) message("Found ", length(rid), " landmark genes")

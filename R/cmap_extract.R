@@ -12,9 +12,12 @@ NULL
 #' @param geneinfo_df Data frame containing gene information
 #' @return List with rid (gene IDs) and genenames (gene symbols)
 #' @keywords internal
-get_rid <- function(geneinfo_df) {
+get_rid <- function(geneinfo_df,landmark=TRUE) {
   gene_overlapping <- geneinfo_df
-  gene_overlapping <- gene_overlapping[gene_overlapping$feature_space == "landmark", ]
+  if (landmark==TRUE)
+  {
+    gene_overlapping <- gene_overlapping[gene_overlapping$feature_space == "landmark", ]
+  }
 
   return(list(
     rid = as.character(gene_overlapping$gene_id),
@@ -32,9 +35,9 @@ get_rid <- function(geneinfo_df) {
 #' @param output_dir Directory to save output files
 #' @return Path to the output file (invisibly)
 #' @keywords internal
-process_combination <- function(combination, rid, genenames, sig_info, 
-                               gctx_file = "level5_beta_trt_cp_n720216x12328.gctx",
-                               output_dir = ".") {
+process_combination <- function(combination, rid, genenames, sig_info,
+                                gctx_file = "level5_beta_trt_cp_n720216x12328.gctx",
+                                output_dir = ".") {
   itime <- combination$itime
   idose <- combination$idose
   cell <- combination$cell
@@ -57,7 +60,7 @@ process_combination <- function(combination, rid, genenames, sig_info,
     gsub(" ", "_", idose), "_",
     gsub(" ", "_", cell), ".csv"
   )
-  
+
   # Full path to output file
   output_file <- file.path(output_dir, filename)
 
@@ -104,7 +107,7 @@ process_combination <- function(combination, rid, genenames, sig_info,
       sep = "\n"
     ), output_file)
   }
-  
+
   return(invisible(output_file))
 }
 
@@ -119,16 +122,16 @@ process_combination <- function(combination, rid, genenames, sig_info,
 #' @return List of processed files (invisibly)
 #' @export
 process_combinations_file <- function(combinations_file, task_id = NULL,
-                                     geneinfo_file = "geneinfo_beta.txt",
-                                     siginfo_file = "siginfo_beta.txt",
-                                     gctx_file = "level5_beta_trt_cp_n720216x12328.gctx",
-                                     output_dir = ".") {
-  
+                                      geneinfo_file = "geneinfo_beta.txt",
+                                      siginfo_file = "siginfo_beta.txt",
+                                      gctx_file = "level5_beta_trt_cp_n720216x12328.gctx",
+                                      output_dir = ".") {
+
   # Create output directory if it doesn't exist
   if (!dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE)
   }
-  
+
   # Check if combinations file exists
   if (!file.exists(combinations_file)) {
     stop("Combinations file not found: ", combinations_file)
@@ -172,7 +175,7 @@ process_combinations_file <- function(combinations_file, task_id = NULL,
 
   # Process combination(s)
   output_files <- character()
-  
+
   if (!is.null(task_id)) {
     # Process just one combination
     if (task_id < 1 || task_id > nrow(combinations)) {
@@ -189,6 +192,6 @@ process_combinations_file <- function(combinations_file, task_id = NULL,
       output_files <- c(output_files, output_file)
     }
   }
-  
+
   return(invisible(output_files))
 }

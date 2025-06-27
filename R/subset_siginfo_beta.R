@@ -90,21 +90,8 @@ subset_siginfo_beta <- function(siginfo_file,
       cat("Column:", col, "\n")
       cat("Available values:\n")
 
-      # For long lists, show only first and last few
-      if (length(unique_vals) > 20) {
-        cat("  [Showing first 10 and last 10 values]\n")
-        for (i in 1:10) {
-          cat(sprintf("  %d: %s\n", i, unique_vals[i]))
-        }
-        cat("  ...\n")
-        n <- length(unique_vals)
-        for (i in (n-9):n) {
-          cat(sprintf("  %d: %s\n", i, unique_vals[i]))
-        }
-      } else {
-        for (i in seq_along(unique_vals)) {
-          cat(sprintf("  %d: %s\n", i, unique_vals[i]))
-        }
+      for (i in seq_along(unique_vals)) {
+        cat(sprintf("  %d: %s\n", i, unique_vals[i]))
       }
 
       # Get user selection

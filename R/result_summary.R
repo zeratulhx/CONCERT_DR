@@ -140,22 +140,15 @@ annotate_drug_results <- function(results_df,
 
   # Extract sig_id from compound column
   # Extract core BRD identifier (e.g., BRD-K22134346 from BRD-K22134346-001-11-6)
-  df_output$sig_id <- sapply(strsplit(df_output$compound, ":"), function(x) {
-    if (length(x) >= 2) {
-      # Extract the BRD code (second part)
-      brd_code <- x[2]
-      # Extract only the core BRD identifier (BRD-[letter][numbers])
-      # This removes suffixes like -001-11-6
-      core_brd <- sub("^(BRD-[A-Z][0-9]+).*", "\\1", brd_code)
-      return(core_brd)
-    } else {
-      return(x[1])  # Fallback to the whole string
-    }
-  })
 
-  # Map sig_id to pert_id
-  sig_to_pert <- stats::setNames(sig_info$cmap_name, sig_info$pert_id)
-  df_output$pert_name <- sig_to_pert[df_output$sig_id]
+  # Use sig_id to get pert_id
+  sigid_to_pertid <- stats::setNames(sig_info$pert_id, sig_info$sig_id)
+  df_output$pert_id <- sigid_to_pertid[df_output$compound]
+
+  # Use pert_id to get compound name
+  if (!"cmap_name" %in% colnames(sig_info)) stop("sig_info must contain 'cmap_name'")
+  pertid_to_name <- stats::setNames(sig_info$cmap_name, sig_info$pert_id)
+  df_output$pert_name <- pertid_to_name[df_output$pert_id]
 
   # Map compound information
   if (verbose) message("Mapping compound names and MOA...")
@@ -163,7 +156,7 @@ annotate_drug_results <- function(results_df,
   # Map aliases
   if ("compound_aliases" %in% colnames(df_comp) && "pert_id" %in% colnames(df_comp)) {
     pert_to_aliases <- stats::setNames(df_comp$compound_aliases, df_comp$pert_id)
-    df_output$aliases <- pert_to_aliases[df_output$sig_id]
+    df_output$aliases <- pert_to_aliases[df_output$compound]
   }
 
   # Step 2: Annotate compounds with clinical phase data
