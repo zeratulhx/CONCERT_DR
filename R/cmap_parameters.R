@@ -179,7 +179,7 @@ process_combinations <- function(combinations, output_dir = "output",
   if (verbose) message("Reading gene info file: ", geneinfo_file)
   tryCatch({
     if (requireNamespace("data.table", quietly = TRUE)) {
-      geneinfo_df <- data.table::fread(geneinfo_file, sep = "\t", header = TRUE)
+      geneinfo_df <- data.table::fread(geneinfo_file, header = TRUE)
     } else {
       geneinfo_df <- utils::read.table(geneinfo_file, sep = "\t", header = TRUE)
     }
@@ -196,7 +196,7 @@ process_combinations <- function(combinations, output_dir = "output",
   if (verbose) message("Reading signature info file: ", siginfo_file)
   tryCatch({
     if (requireNamespace("data.table", quietly = TRUE)) {
-      sig_info <- data.table::fread(siginfo_file, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+      sig_info <- data.table::fread(siginfo_file, header = TRUE, stringsAsFactors = FALSE)
     } else {
       sig_info <- utils::read.table(siginfo_file, sep = "\t", header = TRUE, stringsAsFactors = FALSE)
     }

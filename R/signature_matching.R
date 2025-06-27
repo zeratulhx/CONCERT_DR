@@ -51,14 +51,14 @@ process_signature_with_df <- function(signature_file, reference_df, output_dir =
     if (read_method == "auto") {
       # Auto-detect best method
       if (requireNamespace("data.table", quietly = TRUE)) {
-        gene_data <- data.table::fread(signature_file, sep = "\t", header = TRUE,
+        gene_data <- data.table::fread(signature_file, header = TRUE,
                                        stringsAsFactors = FALSE, data.table = FALSE)
       } else {
         gene_data <- utils::read.delim(signature_file, header = TRUE, sep = "\t",
                                        stringsAsFactors = FALSE, comment.char = "")
       }
     } else if (read_method == "fread" && requireNamespace("data.table", quietly = TRUE)) {
-      gene_data <- data.table::fread(signature_file, sep = "\t", header = TRUE,
+      gene_data <- data.table::fread(signature_file, header = TRUE,
                                      stringsAsFactors = FALSE, data.table = FALSE)
     } else {
       # Default to read.table

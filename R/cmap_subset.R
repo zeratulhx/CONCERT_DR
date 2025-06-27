@@ -53,7 +53,7 @@ extract_cmap_data_from_config <- function(config_file,
   tryCatch({
     if (is.character(geneinfo_file)) {
       if (requireNamespace("data.table", quietly = TRUE)) {
-        geneinfo_df <- data.table::fread(geneinfo_file, sep = "\t", header = TRUE)
+        geneinfo_df <- data.table::fread(geneinfo_file, header = TRUE)
       } else {
         geneinfo_df <- utils::read.table(geneinfo_file, sep = "\t", header = TRUE,
                                          stringsAsFactors = FALSE, quote = "",
@@ -79,7 +79,7 @@ extract_cmap_data_from_config <- function(config_file,
   tryCatch({
     if (is.character(siginfo_file)) {
       if (requireNamespace("data.table", quietly = TRUE)) {
-        sig_info <- data.table::fread(siginfo_file, sep = "\t", header = TRUE,
+        sig_info <- data.table::fread(siginfo_file, header = TRUE,
                                       stringsAsFactors = FALSE)
       } else {
         sig_info <- utils::read.table(siginfo_file, sep = "\t", header = TRUE,
@@ -358,7 +358,7 @@ extract_cmap_data_from_siginfo <- function(siginfo_file = "siginfo_beta.txt",
     if (verbose) message("Reading gene info file...")
     tryCatch({
       if (requireNamespace("data.table", quietly = TRUE)) {
-        geneinfo_df <- data.table::fread(geneinfo_file, sep = "\t", header = TRUE,
+        geneinfo_df <- data.table::fread(geneinfo_file, header = TRUE,
                                          stringsAsFactors = FALSE, data.table = FALSE)
       } else {
         geneinfo_df <- utils::read.table(geneinfo_file, sep = "\t", header = TRUE,
@@ -388,7 +388,7 @@ extract_cmap_data_from_siginfo <- function(siginfo_file = "siginfo_beta.txt",
     if (verbose) message("Reading signature info file...")
     tryCatch({
       if (requireNamespace("data.table", quietly = TRUE)) {
-        sig_info <- data.table::fread(siginfo_file, sep = "\t", header = TRUE,
+        sig_info <- data.table::fread(siginfo_file, header = TRUE,
                                       stringsAsFactors = FALSE, data.table = FALSE)
       } else {
         sig_info <- utils::read.table(siginfo_file, sep = "\t", header = TRUE,

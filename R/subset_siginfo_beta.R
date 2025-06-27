@@ -49,7 +49,7 @@ subset_siginfo_beta <- function(siginfo_file,
 
   tryCatch({
     if (requireNamespace("data.table", quietly = TRUE)) {
-      sig_info <- data.table::fread(siginfo_file, sep = "\t", header = TRUE,
+      sig_info <- data.table::fread(siginfo_file, header = TRUE,
                                     stringsAsFactors = FALSE, data.table = FALSE)
     } else {
       sig_info <- utils::read.table(siginfo_file, sep = "\t", header = TRUE,
