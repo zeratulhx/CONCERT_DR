@@ -137,8 +137,9 @@ extract_cmap_data_from_config <- function(config_file,
 
       if (nrow(mat) > 0) {
         # Convert to data frame and set row names as gene names
-        df <- as.data.frame(mat)
-        rownames(df) <- genenames
+        unique_idx <- !duplicated(genenames)
+        df <- as.data.frame(mat[unique_idx, , drop = FALSE])
+        rownames(df) <- genenames[unique_idx]
 
         # Add metadata columns for this combination
         metadata <- data.frame(
@@ -346,7 +347,8 @@ extract_cmap_data_from_siginfo <- function(siginfo_file = "siginfo_beta.txt",
                                            max_signatures = NULL,
                                            filter_quality = TRUE,
                                            keep_all_genes = TRUE,
-                                           verbose = TRUE) {
+                                           verbose = TRUE,
+                                           landmark=TRUE) {
 
   # Handle geneinfo input
   if (is.character(geneinfo_file)) {

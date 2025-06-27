@@ -14,7 +14,7 @@ NULL
 #' @keywords internal
 get_rid <- function(geneinfo_df,landmark=TRUE) {
   gene_overlapping <- geneinfo_df
-  if (landmark==TRUE)
+  if (landmark)
   {
     gene_overlapping <- gene_overlapping[gene_overlapping$feature_space == "landmark", ]
   }
