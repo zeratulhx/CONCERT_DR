@@ -1,8 +1,4 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
+![image](https://github.com/user-attachments/assets/9b07b382-d65e-4ec1-a761-b71dd6318989)
 
 # CONCERTDR: CONtext-aware Cellular and Tissue-specific Expression for Drug Repurposing
 
@@ -161,7 +157,7 @@ parameters:
 
 reference_df <- extract_cmap_data_from_siginfo(
   geneinfo_file = "path/to/geneinfo_beta.txt",
-  siginfo_file = "path/to/siginfo_beta.txt",
+  siginfo_file = filtered_siginfo,
   gctx_file = "path/to/level5_beta_trt_cp_n720216x12328.gctx",
   filter_quality = TRUE, # Use hiq=1 high quality signatures only
   landmark=TRUE # Use 987 landmark genes only
